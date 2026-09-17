@@ -39,7 +39,9 @@ function Popup() {
       // Create recognizer only once
       if (!recognizer.current) {
         recognizer.current = new SpeechRecognizer(
-          (result) => {
+          (results) => {
+            const result = results[0];
+
             // -----------------------------
             // 1. Display what user said
             // -----------------------------
