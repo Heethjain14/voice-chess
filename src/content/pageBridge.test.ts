@@ -12,12 +12,14 @@ describe("handleBridgeRequest", () => {
 
     const result = handleBridgeRequest(game, {
       channel: BRIDGE_CHANNEL,
+      kind: "request",
       id: "req-1",
       type: "GET_STATE",
     });
 
     expect(result).toEqual({
       channel: BRIDGE_CHANNEL,
+      kind: "response",
       id: "req-1",
       ok: true,
       fen: "8/8/8/8/8/8/8/8 w - - 0 1",
@@ -35,6 +37,7 @@ describe("handleBridgeRequest", () => {
 
     const result = handleBridgeRequest(game, {
       channel: BRIDGE_CHANNEL,
+      kind: "request",
       id: "req-2",
       type: "PLAY_MOVE",
       from: "e2",
@@ -52,12 +55,14 @@ describe("handleBridgeRequest", () => {
   it("returns an error when the board API isn't found", () => {
     const result = handleBridgeRequest(null, {
       channel: BRIDGE_CHANNEL,
+      kind: "request",
       id: "req-3",
       type: "GET_STATE",
     });
 
     expect(result).toEqual({
       channel: BRIDGE_CHANNEL,
+      kind: "response",
       id: "req-3",
       ok: false,
       error: "wc-chess-board API not found on this page.",
@@ -75,6 +80,7 @@ describe("handleBridgeRequest", () => {
 
     const result = handleBridgeRequest(game, {
       channel: BRIDGE_CHANNEL,
+      kind: "request",
       id: "req-4",
       type: "PLAY_MOVE",
       from: "e2",
@@ -83,6 +89,7 @@ describe("handleBridgeRequest", () => {
 
     expect(result).toEqual({
       channel: BRIDGE_CHANNEL,
+      kind: "response",
       id: "req-4",
       ok: false,
       error: "illegal move",

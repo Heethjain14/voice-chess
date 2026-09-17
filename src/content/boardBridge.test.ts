@@ -22,6 +22,7 @@ describe("boardBridge", () => {
   it("resolves board state from a successful GET_STATE response", async () => {
     respondToNextRequest((id) => ({
       channel: BRIDGE_CHANNEL,
+      kind: "response",
       id,
       ok: true,
       fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1",
@@ -37,6 +38,7 @@ describe("boardBridge", () => {
   it("resolves the updated state after playing a move", async () => {
     respondToNextRequest((id) => ({
       channel: BRIDGE_CHANNEL,
+      kind: "response",
       id,
       ok: true,
       fen: "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1",
@@ -52,6 +54,7 @@ describe("boardBridge", () => {
   it("rejects with the bridge error message on failure", async () => {
     respondToNextRequest((id) => ({
       channel: BRIDGE_CHANNEL,
+      kind: "response",
       id,
       ok: false,
       error: "wc-chess-board API not found on this page.",

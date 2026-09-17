@@ -62,7 +62,10 @@ function sendBridgeRequest(
     }
 
     window.addEventListener("message", onMessage);
-    window.postMessage({ channel: BRIDGE_CHANNEL, id, ...request }, "*");
+    window.postMessage(
+      { channel: BRIDGE_CHANNEL, kind: "request", id, ...request },
+      "*"
+    );
   });
 }
 
