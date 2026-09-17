@@ -3,7 +3,7 @@ export interface SpeechResult {
   confidence: number;
 }
 
-type SpeechCallback = (result: SpeechResult) => void;
+type SpeechCallback = (results: SpeechResult[]) => void;
 type ErrorCallback = (error: string) => void;
 
 export class SpeechRecognizer {
@@ -30,15 +30,20 @@ export class SpeechRecognizer {
     this.recognition.continuous = false;
     this.recognition.interimResults = false;
     this.recognition.lang = "en-US";
+    this.recognition.maxAlternatives = 3;
 
     this.recognition.onresult = (event: any) => {
-      const result = event.results[0][0];
+      const alternatives = event.results[0];
+      const results: SpeechResult[] = [];
 
-      this.onResult({
-        transcript: result.transcript,
-        confidence: result.confidence,
-      });
+      for (let i = 0; i < alternatives.length; i++) {
+        results.push({
+          transcript: alternatives[i].transcript,
+          confidence: alternatives[i].confidence,
+        });
+      }
 
+      this.onResult(results);
       this.listening = false;
     };
 
