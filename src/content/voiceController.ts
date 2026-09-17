@@ -29,7 +29,26 @@ export function interpretTranscript(
       );
 
       if (chosen.length === 1) {
-        return { kind: "PLAY", move: chosen[0] };
+        // Verify the chosen move is still legal against the current board
+        const chess = new Chess();
+        chess.load(fen);
+
+        const legalMoves = chess.moves({ verbose: true });
+        const isStillLegal = legalMoves.some(
+          (legal) =>
+            legal.from === chosen[0].from &&
+            legal.to === chosen[0].to &&
+            (legal.promotion ?? undefined) === chosen[0].promotion
+        );
+
+        if (isStillLegal) {
+          return { kind: "PLAY", move: chosen[0] };
+        } else {
+          return {
+            kind: "ERROR",
+            message: "That move is no longer available; please say your move again.",
+          };
+        }
       }
     }
 

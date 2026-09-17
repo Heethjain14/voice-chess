@@ -56,6 +56,25 @@ describe("interpretTranscript", () => {
     expect(result.kind).toBe("ERROR");
   });
 
+  it("returns error when a pending candidate move is no longer legal on the current board", () => {
+    const pending = {
+      candidates: [
+        { from: "b1", to: "c3", promotion: undefined },
+        { from: "d1", to: "c3", promotion: undefined },
+      ],
+    };
+
+    // FEN where only b1 has a knight; d1 is empty, so d1->c3 is stale
+    const staleFEN = "4k3/8/8/8/8/8/8/1N5K w - - 0 1";
+
+    const result = interpretTranscript("d1", staleFEN, pending);
+
+    expect(result.kind).toBe("ERROR");
+    if (result.kind === "ERROR") {
+      expect(result.message).toContain("no longer available");
+    }
+  });
+
   it("reports an error for unrecognized speech", () => {
     const result = interpretTranscript("hello there", START_FEN, null);
 
