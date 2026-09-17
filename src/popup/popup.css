@@ -1,0 +1,36 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+}
+
+.popup {
+  width: 300px;
+  padding: 20px;
+}
+
+.popup h2 {
+  margin-top: 0;
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+button:disabled {
+  cursor: default;
+}
+
+.result {
+  margin-top: 20px;
+}
+
+.result p {
+  background: #f2f2f2;
+  padding: 10px;
+  border-radius: 6px;
+}
