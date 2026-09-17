@@ -1,5 +1,5 @@
 import { Chess } from "chess.js";
-import { ParsedMove } from "./moveParser";
+import type { ParsedMove } from "./moveParser";
 
 export interface ResolvedMove {
   from: string;
