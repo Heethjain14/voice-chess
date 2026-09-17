@@ -3,9 +3,6 @@
   "name": "Voice Chess",
   "version": "0.1.0",
   "description": "Control Chess.com using voice commands.",
-  "permissions": [
-    "storage"
-  ],
   "host_permissions": [
     "https://www.chess.com/*"
   ],
@@ -13,19 +10,22 @@
     "default_popup": "index.html",
     "default_title": "Voice Chess"
   },
-  "background": {
-    "service_worker": "src/background/background.ts",
-    "type": "module"
-  },
   "content_scripts": [
     {
       "matches": [
         "https://www.chess.com/play/*",
         "https://www.chess.com/game/*"
       ],
-      "js": [
-        "src/content/content.ts"
+      "js": ["src/content/pageBridge.ts"],
+      "world": "MAIN",
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://www.chess.com/play/*",
+        "https://www.chess.com/game/*"
       ],
+      "js": ["src/content/main.ts"],
       "run_at": "document_idle"
     }
   ]
