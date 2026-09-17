@@ -1,4 +1,4 @@
-import { Chess } from "chess.js";
+import type { Chess } from "chess.js";
 import type { ParsedMove } from "./moveParser";
 
 export interface ResolvedMove {
@@ -11,31 +11,36 @@ export function resolveMove(
   chess: Chess,
   parsed: ParsedMove
 ): ResolvedMove[] {
+  const legalMoves = chess.moves({ verbose: true });
 
-  const legalMoves = chess.moves({
-    verbose: true
-  });
-
-  // Handle castling later.
   if (parsed.castle) {
-    return [];
+    const flag = parsed.castle === "queenside" ? "q" : "k";
+
+    return legalMoves
+      .filter((move) => move.piece === "k" && move.flags.includes(flag))
+      .map((move) => ({ from: move.from, to: move.to, promotion: undefined }));
   }
 
-  return legalMoves
-    .filter((move) => {
-      return (
-        move.piece === parsed.piece &&
-        move.to === parsed.target
-      );
-    })
-    .map((move) => ({
-      from: move.from,
-      to: move.to,
-      promotion: move.promotion as
-        | "q"
-        | "r"
-        | "b"
-        | "n"
-        | undefined
-    }));
+  let candidates = legalMoves.filter(
+    (move) => move.piece === parsed.piece && move.to === parsed.target
+  );
+
+  if (parsed.capture) {
+    const capturing = candidates.filter((move) => move.flags.includes("c"));
+    if (capturing.length > 0) {
+      candidates = capturing;
+    }
+  }
+
+  if (parsed.promotion) {
+    candidates = candidates.filter(
+      (move) => move.promotion === parsed.promotion
+    );
+  }
+
+  return candidates.map((move) => ({
+    from: move.from,
+    to: move.to,
+    promotion: move.promotion as "q" | "r" | "b" | "n" | undefined,
+  }));
 }
