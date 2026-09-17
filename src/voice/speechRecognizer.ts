@@ -9,11 +9,12 @@ type ErrorCallback = (error: string) => void;
 export class SpeechRecognizer {
   private recognition: any;
   private listening = false;
+  private onResult: SpeechCallback;
+  private onError: ErrorCallback;
 
-  constructor(
-    private onResult: SpeechCallback,
-    private onError: ErrorCallback
-  ) {
+  constructor(onResult: SpeechCallback, onError: ErrorCallback) {
+    this.onResult = onResult;
+    this.onError = onError;
     const SpeechRecognition =
       window.SpeechRecognition ||
       window.webkitSpeechRecognition;
