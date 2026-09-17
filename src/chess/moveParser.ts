@@ -1,138 +1,128 @@
+import { applyPhoneticCorrections } from "./phoneticMap";
+import { closestMatch } from "./textMatch";
+
 export interface ParsedMove {
   piece: "p" | "n" | "b" | "r" | "q" | "k";
   target: string;
   capture: boolean;
   castle?: "kingside" | "queenside";
+  promotion?: "q" | "r" | "b" | "n";
 }
 
-const pieceAliases: Record<
-  ParsedMove["piece"],
-  string[]
-> = {
+const PIECE_ALIASES: Record<ParsedMove["piece"], string[]> = {
   p: ["pawn", "pawns"],
-  n: ["knight", "knights", "night", "nights"],
+  n: ["knight", "knights"],
   b: ["bishop", "bishops"],
   r: ["rook", "rooks"],
   q: ["queen", "queens"],
   k: ["king", "kings"],
 };
 
-export function parseMove(
-  text: string
-): ParsedMove | null {
+const PROMOTION_ALIASES: Record<"q" | "r" | "b" | "n", string[]> = {
+  q: ["queen", "queens"],
+  r: ["rook", "rooks"],
+  b: ["bishop", "bishops"],
+  n: ["knight", "knights"],
+};
 
-  // ----------------------------------
-  // Normalize speech recognition text
-  // ----------------------------------
+const CAPTURE_WORDS = [
+  "capture",
+  "captures",
+  "capturing",
+  "take",
+  "takes",
+  "taking",
+];
+const CASTLE_WORDS = ["castle", "castling"];
+const QUEENSIDE_WORDS = ["queenside", "long"];
+const KINGSIDE_WORDS = ["kingside", "short"];
 
-  const normalized = text
+const VOCABULARY = [
+  ...Object.values(PIECE_ALIASES).flat(),
+  ...CAPTURE_WORDS,
+  ...CASTLE_WORDS,
+  ...QUEENSIDE_WORDS,
+  ...KINGSIDE_WORDS,
+];
+
+function tokenize(text: string): string[] {
+  return text
     .toLowerCase()
     .replace(/[.,!?]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
+    .split(/\s+/)
+    .filter(Boolean);
+}
 
-  console.log(
-    "Normalized speech:",
-    normalized
-  );
+function isSquare(token: string): boolean {
+  return /^[a-h][1-8]$/.test(token);
+}
 
-  // ----------------------------------
-  // Castling
-  // ----------------------------------
+function correctToken(token: string): string {
+  if (VOCABULARY.includes(token)) return token;
+  if (isSquare(token)) return token;
+  if (/^[a-h]$/.test(token) || /^[1-8]$/.test(token)) return token;
 
-  if (
-    normalized.includes("castle") ||
-    normalized.includes("castling")
-  ) {
+  return closestMatch(token, VOCABULARY, 2) ?? token;
+}
 
-    if (
-      normalized.includes("queen") ||
-      normalized.includes("long")
-    ) {
-      return {
-        piece: "k",
-        target: "",
-        capture: false,
-        castle: "queenside",
-      };
+function mergeSquareTokens(tokens: string[]): string[] {
+  const merged: string[] = [];
+
+  for (let i = 0; i < tokens.length; i++) {
+    const current = tokens[i];
+    const next = tokens[i + 1];
+
+    if (/^[a-h]$/.test(current) && next && /^[1-8]$/.test(next)) {
+      merged.push(current + next);
+      i++;
+      continue;
     }
 
-    return {
-      piece: "k",
-      target: "",
-      capture: false,
-      castle: "kingside",
-    };
+    merged.push(current);
   }
 
-  // ----------------------------------
-  // Find target square
-  // ----------------------------------
+  return merged;
+}
 
-  const squareMatch = normalized.match(
-    /\b([a-h][1-8])\b/
-  );
+export function parseMove(text: string): ParsedMove | null {
+  const rawTokens = tokenize(text);
+  const phoneticTokens = applyPhoneticCorrections(rawTokens);
+  const correctedTokens = phoneticTokens.map(correctToken);
+  const tokens = mergeSquareTokens(correctedTokens);
 
-  if (!squareMatch) {
-    console.log(
-      "No chess square detected."
-    );
+  const hasAny = (words: string[]) => tokens.some((t) => words.includes(t));
 
-    return null;
+  if (hasAny(CASTLE_WORDS)) {
+    const castle = hasAny(QUEENSIDE_WORDS) ? "queenside" : "kingside";
+    return { piece: "k", target: "", capture: false, castle };
   }
 
-  const target = squareMatch[1];
+  const targetIndex = tokens.findIndex(isSquare);
+  if (targetIndex === -1) return null;
+  const target = tokens[targetIndex];
 
-  // ----------------------------------
-  // Determine piece
-  // ----------------------------------
+  const beforeTarget = tokens.slice(0, targetIndex);
+  const afterTarget = tokens.slice(targetIndex + 1);
 
   let piece: ParsedMove["piece"] = "p";
-
-  for (
-    const [symbol, aliases] of Object.entries(
-      pieceAliases
-    )
-  ) {
-
-    const found = aliases.some(
-      (alias) =>
-        normalized.includes(alias)
-    );
-
-    if (found) {
-      piece =
-        symbol as ParsedMove["piece"];
-
+  for (const [symbol, aliases] of Object.entries(PIECE_ALIASES)) {
+    if (beforeTarget.some((t) => aliases.includes(t))) {
+      piece = symbol as ParsedMove["piece"];
       break;
     }
   }
 
-  // ----------------------------------
-  // Detect captures
-  // ----------------------------------
+  const capture = hasAny(CAPTURE_WORDS);
 
-  const capture =
-    normalized.includes("capture") ||
-    normalized.includes("captures") ||
-    normalized.includes("takes") ||
-    normalized.includes("take") ||
-    normalized.includes("capturing");
+  let promotion: ParsedMove["promotion"] | undefined;
+  for (const [symbol, aliases] of Object.entries(PROMOTION_ALIASES)) {
+    if (afterTarget.some((t) => aliases.includes(t))) {
+      promotion = symbol as ParsedMove["promotion"];
+      break;
+    }
+  }
 
-  // ----------------------------------
-  // Return parsed move
-  // ----------------------------------
-
-  const result: ParsedMove = {
-    piece,
-    target,
-    capture,
-  };
-
-  console.log(
-    "Parsed chess command:",
-    result
-  );
-
-  return result;
+  return promotion
+    ? { piece, target, capture, promotion }
+    : { piece, target, capture };
 }
